@@ -1,0 +1,765 @@
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<style>
+    /* Изолированный контейнер для предотвращения конфликтов со стилями Tilda */
+    .ta-wrapper {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+        color: #1a1a1a;
+        line-height: 1.6;
+        box-sizing: border-box;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .ta-wrapper * { box-sizing: inherit; }
+
+    /* Базовые элементы */
+    .ta-h2 { font-size: 2.2rem; font-weight: 700; margin-bottom: 1rem; text-align: center; }
+    .ta-h3 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .ta-p { margin-bottom: 1rem; color: #4a4a4a; }
+    
+    .ta-btn {
+        display: inline-flex; justify-content: center; align-items: center;
+        padding: 12px 24px; border-radius: 8px; border: none;
+        font-weight: 600; font-size: 1rem; cursor: pointer;
+        transition: all 0.3s ease; text-decoration: none;
+    }
+    .ta-btn-primary { background: #0066FF; color: #fff; }
+    .ta-btn-primary:hover { background: #0052cc; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,102,255,0.3); }
+    .ta-btn-secondary { background: #f0f4f8; color: #0066FF; }
+    .ta-btn-secondary:hover { background: #e1e8f0; }
+    
+    /* Сетки */
+    .ta-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .ta-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+
+    /* Hero с фоновым изображением */
+    .ta-hero {
+        position: relative;
+        text-align: center; padding: 100px 20px; 
+        background-color: #1e293b;
+        background-image: url('images/hero-bg.jpg');
+        background-size: cover;
+        background-position: center;
+        border-radius: 20px; margin-bottom: 40px;
+        overflow: hidden;
+    }
+    .ta-hero::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.7) 100%);
+        z-index: 1;
+    }
+    .ta-hero-content {
+        position: relative; z-index: 2;
+    }
+    .ta-hero h1 { font-size: 3rem; font-weight: 800; margin-bottom: 15px; color: #fff; line-height: 1.2; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+    .ta-hero p { color: #f8fafc; text-shadow: 0 1px 5px rgba(0,0,0,0.5); }
+    
+    /* Карточки сценариев с фото */
+    .ta-scenario-card {
+        background: #fff; border: 1px solid #e1e8f0; border-radius: 16px; overflow: hidden;
+        transition: all 0.3s ease; text-align: center; cursor: pointer;
+        display: flex; flex-direction: column;
+    }
+    .ta-scenario-img {
+        width: 100%; height: 160px; object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    .ta-scenario-card:hover .ta-scenario-img { transform: scale(1.05); }
+    .ta-scenario-card:hover { border-color: #0066FF; box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
+    .ta-scenario-content { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+    
+    /* Квиз */
+    .ta-section { display: none; margin-bottom: 60px; animation: fadeIn 0.5s ease-in-out; }
+    .ta-section.active { display: block; }
+    
+    .ta-quiz-container { background: #fff; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+    .ta-quiz-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
+    .ta-quiz-opt {
+        padding: 20px 15px; border: 2px solid #edf2f7; border-radius: 12px; cursor: pointer;
+        text-align: center; font-weight: 600; transition: all 0.2s; color: #334155;
+    }
+    .ta-quiz-opt:hover, .ta-quiz-opt.selected { border-color: #0066FF; background: #f0f7ff; color: #0066FF; transform: translateY(-2px); }
+
+    /* Пакеты (результат квиза) */
+    .ta-package-card { border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: all 0.3s;}
+    .ta-package-card:hover { box-shadow: 0 12px 30px rgba(0,0,0,0.1); transform: translateY(-5px); }
+    .ta-package-img { width: 100%; height: 220px; object-fit: cover; }
+    .ta-package-content { padding: 24px; flex-grow: 1; display: flex; flex-direction: column; }
+    .ta-package-price { font-size: 1.6rem; font-weight: 800; color: #0066FF; margin: 15px 0; }
+    .ta-checklist { list-style: none; padding: 0; margin: 0 0 20px 0; }
+    .ta-checklist li { position: relative; padding-left: 28px; margin-bottom: 10px; font-size: 0.95rem; color: #4a4a4a; }
+    .ta-checklist li::before {
+        content: '✓'; position: absolute; left: 0; top: 0; color: #0066FF; font-weight: bold; background: #e6f0fa;
+        width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px;
+    }
+
+    /* Конструктор (Премиум) */
+    .ta-constructor-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+    #ta-map { height: 500px; border-radius: 16px; z-index: 1; border: 1px solid #e1e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .ta-sidebar { background: #fff; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column;}
+    .ta-route-item { background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
+    .ta-total-price { font-size: 1.8rem; font-weight: 800; margin: 20px 0; color: #0066FF; border-top: 2px dashed #cbd5e1; padding-top: 20px;}
+    
+    /* Формы и инпуты */
+    .ta-form-group { margin-bottom: 15px; }
+    .ta-form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; color: #334155;}
+    .ta-form-control { width: 100%; padding: 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 1rem; background: #f8fafc; transition: all 0.2s;}
+    .ta-form-control:focus { outline: none; border-color: #0066FF; background: #fff; box-shadow: 0 0 0 3px rgba(0,102,255,0.15); }
+    
+    /* Регионы */
+    .ta-region-card { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: all 0.3s; border: 1px solid #e2e8f0;}
+    .ta-region-card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
+    .ta-region-img { width: 100%; height: 220px; object-fit: cover; }
+    .ta-region-info { padding: 24px; }
+    .ta-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
+    .ta-tag { background: #e6f0fa; color: #0066FF; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+    .ta-tag.warning { background: #fff7ed; color: #ea580c; }
+    
+    /* Аккордеон гарантий */
+    .ta-accordion-item { border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 10px; overflow: hidden; background: #fff; }
+    .ta-accordion-header { padding: 20px; cursor: pointer; font-weight: 600; display: flex; justify-content: space-between; align-items: center; color: #1e293b; }
+    .ta-accordion-body { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; background: #f8fafc; color: #475569; }
+    .ta-accordion-item.active .ta-accordion-body { padding: 15px 20px 20px 20px; max-height: 250px; }
+    .ta-accordion-item.active .ta-accordion-header { background: #f0f7ff; color: #0066FF; border-bottom: 1px solid #e2e8f0; }
+
+    /* Split-блоки для Гарантий и Формы */
+    .ta-split-block { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: stretch; background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+    .ta-split-img { width: 100%; height: 100%; object-fit: cover; min-height: 400px; }
+    .ta-split-content { padding: 40px; display: flex; flex-direction: column; justify-content: center; }
+
+    /* Кастомное модальное окно вместо alert() */
+    .ta-msg-overlay {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.6);
+        z-index: 10000; display: flex; justify-content: center; align-items: center;
+        opacity: 0; pointer-events: none; transition: opacity 0.3s ease; backdrop-filter: blur(4px);
+    }
+    .ta-msg-overlay.active { opacity: 1; pointer-events: all; }
+    .ta-msg-box {
+        background: #fff; padding: 30px; border-radius: 16px; max-width: 400px; width: 90%;
+        text-align: center; transform: translateY(20px); transition: transform 0.3s ease;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    .ta-msg-overlay.active .ta-msg-box { transform: translateY(0); }
+    .ta-msg-title { font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 10px; }
+    .ta-msg-text { color: #475569; margin-bottom: 20px; }
+
+    /* Анимации */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Адаптив */
+    @media (max-width: 900px) {
+        .ta-split-block { grid-template-columns: 1fr; }
+        .ta-split-img { height: 250px; min-height: 250px; }
+    }
+    @media (max-width: 768px) {
+        .ta-hero h1 { font-size: 2.2rem; }
+        .ta-constructor-layout { grid-template-columns: 1fr; }
+        #ta-map { height: 350px; }
+        .ta-hero { padding: 60px 20px; }
+    }
+</style>
+
+<div class="ta-wrapper" id="tour-widget">
+    
+    <!-- Кастомный Alert Box -->
+    <div class="ta-msg-overlay" id="ta-custom-alert">
+        <div class="ta-msg-box">
+            <div class="ta-msg-title" id="ta-alert-title">Уведомление</div>
+            <div class="ta-msg-text" id="ta-alert-text">Текст сообщения</div>
+            <button class="ta-btn ta-btn-primary" style="width: 100%;" onclick="window.tourApp.closeAlert()">Понятно</button>
+        </div>
+    </div>
+
+    <!-- Hero Section с атмосферным фото -->
+    <div class="ta-hero">
+        <div class="ta-hero-content">
+            <h1>Соберите свой идеальный маршрут по России</h1>
+            <p class="ta-p" style="font-size: 1.2rem; max-width: 700px; margin: 0 auto 30px auto;">
+                Экскурсии, море и кемпинги в одном путешествии. Мы создадим тур, который идеально подойдёт под ваш бюджет и стиль отдыха.
+            </p>
+            <div class="ta-grid-2" style="max-width: 700px; margin: 0 auto;">
+                <button class="ta-btn ta-btn-primary" style="font-size: 1.1rem; padding: 15px;" onclick="window.tourApp.startScenario('mass')">Быстрый подбор</button>
+                <button class="ta-btn ta-btn-secondary" style="font-size: 1.1rem; padding: 15px;" onclick="window.tourApp.startScenario('premium')">Собрать маршрут</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Блок "Что вам ближе" (Сценарии до выбора) -->
+    <div id="ta-scenarios-preview" class="ta-section active">
+        <h2 class="ta-h2">Что вам ближе?</h2>
+        <div class="ta-grid-3">
+            <div class="ta-scenario-card" onclick="window.tourApp.startScenario('mass', 'excursion_sea')">
+                <img src="images/scenario-sea.jpg" alt="Экскурсии и море" class="ta-scenario-img">
+                <div class="ta-scenario-content">
+                    <div>
+                        <h3 class="ta-h3">🏛️ + 🌊 Экскурсии + море</h3>
+                        <p class="ta-p">Познакомьтесь с историей и отдохните у воды — насыщенно, но без долгих переездов.</p>
+                    </div>
+                    <div class="ta-btn ta-btn-secondary" style="width: 100%; margin-top: 15px;">Подобрать</div>
+                </div>
+            </div>
+            <div class="ta-scenario-card" onclick="window.tourApp.startScenario('mass', 'sea_camping')">
+                <img src="images/scenario-camping.jpg" alt="Море и кемпинг" class="ta-scenario-img">
+                <div class="ta-scenario-content">
+                    <div>
+                        <h3 class="ta-h3">🌊 + 🏕️ Море + кемпинг</h3>
+                        <p class="ta-p">Тишина, звёзды и шум прибоя — идеальный выбор для тех, кто хочет быть ближе к природе.</p>
+                    </div>
+                    <div class="ta-btn ta-btn-secondary" style="width: 100%; margin-top: 15px;">Подобрать</div>
+                </div>
+            </div>
+            <div class="ta-scenario-card" onclick="window.tourApp.startScenario('mass', 'excursion_only')">
+                <img src="images/scenario-excursion.jpg" alt="Только экскурсии" class="ta-scenario-img">
+                <div class="ta-scenario-content">
+                    <div>
+                        <h3 class="ta-h3">🏛️ Только экскурсии</h3>
+                        <p class="ta-p">Глубокое погружение в культуру, архитектуру и местные традиции без отвлечения на пляж.</p>
+                    </div>
+                    <div class="ta-btn ta-btn-secondary" style="width: 100%; margin-top: 15px;">Подобрать</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Массовый сценарий: Квиз -->
+    <div id="ta-mass-scenario" class="ta-section">
+        <div class="ta-quiz-container">
+            <div id="ta-quiz-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h2 class="ta-h2" style="margin: 0; text-align: left;">Подбор тура</h2>
+                <span style="background: #e6f0fa; color: #0066FF; padding: 6px 16px; border-radius: 20px; font-weight: bold;">
+                    Шаг <span id="ta-quiz-step">1</span> из 4
+                </span>
+            </div>
+            
+            <div id="ta-quiz-content">
+                <h3 class="ta-h3" id="ta-quiz-question" style="font-size: 1.6rem; color: #0f172a;">Что для вас важнее в поездке?</h3>
+                <div class="ta-quiz-options" id="ta-quiz-options-container">
+                    <!-- Опции генерятся через JS -->
+                </div>
+            </div>
+            
+            <div style="margin-top: 40px; display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+                <button class="ta-btn ta-btn-secondary" id="ta-quiz-prev" style="visibility: hidden;">&larr; Назад</button>
+                <button class="ta-btn ta-btn-primary" id="ta-quiz-next">Далее &rarr;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Массовый сценарий: Результаты -->
+    <div id="ta-mass-results" class="ta-section">
+        <h2 class="ta-h2">Мы подобрали для вас лучшие варианты</h2>
+        <div class="ta-p" style="text-align: center; margin-bottom: 40px; background: #f0f7ff; padding: 20px; border-radius: 12px; color: #0052cc; font-size: 1.1rem; border: 1px solid #bfdbfe;">
+            <strong>Почему это подходит:</strong> <span id="ta-why-fits">Основываясь на ваших ответах, эти туры идеально балансируют выбранный бюджет и желаемые активности.</span>
+        </div>
+        <div class="ta-grid-3" id="ta-packages-container">
+            <!-- Карточки пакетов рендерятся через JS -->
+        </div>
+    </div>
+
+    <!-- Премиальный сценарий: Конструктор -->
+    <div id="ta-premium-scenario" class="ta-section">
+        <h2 class="ta-h2">Конструктор индивидуального маршрута</h2>
+        <p class="ta-p" style="text-align: center; margin-bottom: 30px; font-size: 1.1rem;">Кликайте по маркерам на карте, чтобы добавить регионы в ваше авторское путешествие.</p>
+        
+        <div class="ta-constructor-layout">
+            <div class="ta-map-container">
+                <div id="ta-map"></div>
+            </div>
+            
+            <div class="ta-sidebar">
+                <h3 class="ta-h3">Ваш маршрут</h3>
+                <div id="ta-selected-route">
+                    <p class="ta-p" style="font-size: 0.95rem; color: #64748b; text-align: center; padding: 20px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">Пока ничего не выбрано. Выберите точки на интерактивной карте слева.</p>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <h4 class="ta-h3" style="font-size: 1.1rem; margin-bottom: 15px;">Дополнительные услуги:</h4>
+                    <label style="display: flex; gap: 10px; margin-bottom: 12px; cursor: pointer; align-items: center; color: #334155;">
+                        <input type="checkbox" id="ta-opt-guide" style="width: 18px; height: 18px;" onchange="window.tourApp.updateConstructorTotal()"> Индивидуальный гид (+15 000 ₽)
+                    </label>
+                    <label style="display: flex; gap: 10px; margin-bottom: 12px; cursor: pointer; align-items: center; color: #334155;">
+                        <input type="checkbox" id="ta-opt-gastro" style="width: 18px; height: 18px;" onchange="window.tourApp.updateConstructorTotal()"> Гастро-тур от шефа (+10 000 ₽)
+                    </label>
+                    <label style="display: flex; gap: 10px; margin-bottom: 12px; cursor: pointer; align-items: center; color: #334155;">
+                        <input type="checkbox" id="ta-opt-transfer" style="width: 18px; height: 18px;" onchange="window.tourApp.updateConstructorTotal()"> Трансфер комфорт-класса (+8 000 ₽)
+                    </label>
+                </div>
+                
+                <div style="margin-top: auto;">
+                    <div class="ta-total-price">Итого: <span id="ta-constructor-total">0</span> ₽</div>
+                    <button class="ta-btn ta-btn-primary" style="width: 100%; padding: 15px; font-size: 1.1rem;" onclick="window.tourApp.scrollToForm('premium')">Оформить заявку</button>
+                    <button class="ta-btn ta-btn-secondary" style="width: 100%; margin-top: 10px;" onclick="window.tourApp.showAlert('Генерация PDF', 'Черновик маршрута успешно сформирован и готовится к скачиванию.')">Скачать черновик (PDF)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Блок регионов -->
+    <div id="ta-regions-section" class="ta-section active" style="margin-top: 80px;">
+        <h2 class="ta-h2">Популярные направления</h2>
+        <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 40px; flex-wrap: wrap;">
+            <select class="ta-form-control" style="max-width: 250px; cursor: pointer; font-weight: 600;" id="ta-month-filter" onchange="window.tourApp.filterRegions(this.value)">
+                <option value="all">🌍 Все месяцы</option>
+                <option value="май">🌸 Май</option>
+                <option value="июнь">☀️ Июнь</option>
+                <option value="июль">🔥 Июль</option>
+                <option value="август">🍉 Август</option>
+                <option value="сентябрь">🍂 Сентябрь</option>
+            </select>
+        </div>
+        <div class="ta-grid-3" id="ta-regions-grid">
+            <!-- Регионы рендерятся через JS -->
+        </div>
+    </div>
+
+    <!-- Блок гарантий со Split-дизайном -->
+    <div class="ta-section active" style="margin-top: 80px;">
+        <h2 class="ta-h2" style="margin-bottom: 40px;">Гарантии и высочайший сервис</h2>
+        <div class="ta-split-block">
+            <img src="images/guarantees.jpg" alt="Команда и сервис" class="ta-split-img">
+            <div class="ta-split-content">
+                <h3 class="ta-h3" style="margin-bottom: 20px;">Что, если…</h3>
+                
+                <div class="ta-accordion-item">
+                    <div class="ta-accordion-header" onclick="this.parentElement.classList.toggle('active')">
+                        Отмена или задержка рейса <span style="color: #0066FF; font-size: 1.5rem; line-height: 1;">+</span>
+                    </div>
+                    <div class="ta-accordion-body">
+                        Мы мгновенно предложим альтернативный рейс или оформим возврат денег по правилам авиакомпании. Наш менеджер на связи с вами 24/7 до решения проблемы.
+                    </div>
+                </div>
+                
+                <div class="ta-accordion-item">
+                    <div class="ta-accordion-header" onclick="this.parentElement.classList.toggle('active')">
+                        Болезнь перед вылетом <span style="color: #0066FF; font-size: 1.5rem; line-height: 1;">+</span>
+                    </div>
+                    <div class="ta-accordion-body">
+                        Мы поможем с экстренным переносом дат отдыха или правильным оформлением возврата средств. Подскажем, как действовать со страховой компанией без лишних нервов.
+                    </div>
+                </div>
+                
+                <div class="ta-accordion-item">
+                    <div class="ta-accordion-header" onclick="this.parentElement.classList.toggle('active')">
+                        Необходим перенос дат <span style="color: #0066FF; font-size: 1.5rem; line-height: 1;">+</span>
+                    </div>
+                    <div class="ta-accordion-body">
+                        Бесплатно подберём новые даты и согласуем все изменения с партнёрами, гидами и отелями, стараясь минимизировать любые возможные штрафы.
+                    </div>
+                </div>
+
+                <h3 class="ta-h3" style="margin-top: 30px; margin-bottom: 15px;">В каждый тур включено:</h3>
+                <ul class="ta-checklist">
+                    <li>Проживание только в проверенных нами локациях</li>
+                    <li>Подробный авторский маршрутный лист</li>
+                    <li>Личный менеджер 24/7 в Telegram / WhatsApp</li>
+                    <li>Расширенная медицинская страховка</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Форма заявки -->
+    <div class="ta-section active" style="margin-top: 80px;" id="ta-contact-form-section">
+        <div class="ta-split-block">
+            <div class="ta-split-content" style="background: #f8fafc;">
+                <h2 class="ta-h2" style="margin-bottom: 10px; text-align: left;">Оставить заявку</h2>
+                <p class="ta-p" style="margin-bottom: 30px;">Заполните форму, и наш эксперт свяжется с вами для уточнения всех деталей и подтверждения дат.</p>
+                
+                <form id="ta-lead-form" onsubmit="window.tourApp.submitForm(event)">
+                    <input type="hidden" id="ta-lead-scenario" name="scenario" value="default">
+                    <input type="hidden" id="ta-lead-data" name="data" value="">
+                    
+                    <div class="ta-form-group">
+                        <label>Ваше имя</label>
+                        <input type="text" class="ta-form-control" required placeholder="Например, Иван Иванов">
+                    </div>
+                    
+                    <div class="ta-form-group">
+                        <label>Телефон / WhatsApp</label>
+                        <input type="tel" class="ta-form-control" required placeholder="+7 (999) 000-00-00">
+                    </div>
+                    
+                    <div class="ta-form-group">
+                        <label>Желаемые даты поездки (примерно)</label>
+                        <input type="text" class="ta-form-control" placeholder="Июль - Август">
+                    </div>
+                    
+                    <div class="ta-form-group" style="margin: 25px 0;">
+                        <label style="display: flex; gap: 12px; cursor: pointer; align-items: center; font-weight: normal; color: #475569;">
+                            <input type="checkbox" checked style="width: 20px; height: 20px;"> Хочу подробную консультацию менеджера
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="ta-btn ta-btn-primary" style="width: 100%; font-size: 1.1rem; padding: 16px;">Отправить заявку &rarr;</button>
+                </form>
+            </div>
+            <img src="images/form.jpg" alt="Планирование тура" class="ta-split-img">
+        </div>
+    </div>
+</div>
+
+<script>
+    // Изолируем логику в глобальный объект, чтобы не мусорить в window
+    window.tourApp = (function() {
+        
+        // --- БАЗА ДАННЫХ (JSON) С ЛОКАЛЬНЫМИ ПУТЯМИ ---
+        const db = {
+            regions: [
+                {
+                    id: "karelia",
+                    name: "Карелия",
+                    description: "Кижи, Рускеала, Ладога — природа и история в одном завораживающем маршруте.",
+                    season: ["июнь", "июль", "август", "сентябрь"],
+                    activities: ["экскурсии", "кемпинг", "треккинг", "вода"],
+                    photo: "images/region-karelia.jpg",
+                    coords: [62.0, 34.0],
+                    basePrice: 25000
+                },
+                {
+                    id: "caucasus",
+                    name: "Кавказ (Дагестан)",
+                    description: "Древние горные аулы, бирюзовые каньоны, Каспийское море и глэмпинги с видом на облака.",
+                    season: ["май", "июнь", "июль", "август", "сентябрь"],
+                    activities: ["экскурсии", "кемпинг", "горы", "гастрономия"],
+                    photo: "images/region-caucasus.jpg",
+                    coords: [43.0, 47.0],
+                    basePrice: 32000
+                },
+                {
+                    id: "altai",
+                    name: "Алтай",
+                    description: "Место силы: бирюзовая Катунь, легендарный Чуйский тракт и марсианские пейзажи.",
+                    season: ["июнь", "июль", "август"],
+                    activities: ["треккинг", "глэмпинг", "природа"],
+                    photo: "images/region-altai.jpg",
+                    coords: [50.9, 86.1],
+                    basePrice: 45000
+                },
+                {
+                    id: "baikal",
+                    name: "Байкал",
+                    description: "Кристально чистое пресное море, мистический остров Ольхон и бескрайняя сибирская тайга.",
+                    season: ["июль", "август"],
+                    activities: ["экскурсии", "вода", "гастрономия"],
+                    photo: "images/region-baikal.jpg",
+                    coords: [53.5, 108.0],
+                    basePrice: 55000
+                }
+            ],
+            packages: [
+                { id: 1, name: "Карельский экспресс", price: "45 000", match: ["Экскурсии и история", "до 80 тыс. ₽", "3–5 дней", "Комфортный отель"], includes: ["Проживание 3 ночи (4 звезды)", "Экскурсия в каньон Рускеала", "Билеты на метеор до Кижи", "Трансфер от Петрозаводска"], img: "images/pack-karelia.jpg" },
+                { id: 2, name: "Дагестан: Горы и Море", price: "68 000", match: ["Природа и глэмпинги", "80–150 тыс. ₽", "7–10 дней", "Аутентичный глэмпинг"], includes: ["Глэмпинг в горах 4 ночи", "Джип-тур к Сулакскому каньону", "Национальная кухня (завтраки+ужины)", "Прогулка на катере"], img: "images/pack-caucasus.jpg" },
+                { id: 3, name: "Алтайская перезагрузка", price: "120 000", match: ["Природа и глэмпинги", "от 150 тыс. ₽", "7–10 дней", "Аутентичный глэмпинг"], includes: ["Проживание премиум 7 ночей", "Вертолетная экскурсия к Белухе", "Личный гид-сопровождающий", "SPA-комплекс и баня"], img: "images/pack-altai.jpg" }
+            ]
+        };
+
+        // --- ЛОГИКА МАССОВОГО КВИЗА ---
+        const quizQuestions = [
+            { id: 'q1', text: 'Что для вас важнее в поездке?', options: ['Экскурсии и история', 'Пляж и расслабление', 'Природа и глэмпинги', 'Гастрономия'] },
+            { id: 'q2', text: 'Какой бюджет вы рассматриваете (на человека)?', options: ['до 80 тыс. ₽', '80–150 тыс. ₽', 'от 150 тыс. ₽'] },
+            { id: 'q3', text: 'Сколько дней планируете отдыхать?', options: ['3–5 дней', '7–10 дней', 'Более 10 дней'] },
+            { id: 'q4', text: 'Какой тип размещения предпочитаете?', options: ['Комфортный отель', 'Аутентичный глэмпинг', 'Палаточный кемпинг'] }
+        ];
+        let currentQuizStep = 0;
+        let quizAnswers = {};
+
+        // --- ЛОГИКА ПРЕМИУМ КОНСТРУКТОРА ---
+        let map = null;
+        let constructorRoute = [];
+        
+        function init() {
+            renderRegions('all');
+        }
+
+        // --- КАСТОМНЫЕ УВЕДОМЛЕНИЯ (ЗАМЕНА ALERT) ---
+        function showAlert(title, text) {
+            document.getElementById('ta-alert-title').innerText = title;
+            document.getElementById('ta-alert-text').innerText = text;
+            document.getElementById('ta-custom-alert').classList.add('active');
+        }
+        function closeAlert() {
+            document.getElementById('ta-custom-alert').classList.remove('active');
+        }
+
+        function hideAllSections() {
+            document.querySelectorAll('.ta-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('ta-regions-section').classList.add('active'); 
+            document.getElementById('ta-contact-form-section').classList.add('active'); 
+        }
+
+        function startScenario(type, preSelect = null) {
+            hideAllSections();
+            document.getElementById('ta-lead-scenario').value = type;
+            
+            if (type === 'mass') {
+                document.getElementById('ta-mass-scenario').classList.add('active');
+                if(preSelect) quizAnswers['preSelect'] = preSelect;
+                currentQuizStep = 0;
+                renderQuizStep();
+                document.getElementById('ta-mass-scenario').scrollIntoView({behavior: 'smooth', block: 'start'});
+            } else if (type === 'premium') {
+                document.getElementById('ta-premium-scenario').classList.add('active');
+                initMap();
+                document.getElementById('ta-premium-scenario').scrollIntoView({behavior: 'smooth', block: 'start'});
+            }
+        }
+
+        // --- КВИЗ ФУНКЦИИ ---
+        function renderQuizStep() {
+            const q = quizQuestions[currentQuizStep];
+            document.getElementById('ta-quiz-step').innerText = currentQuizStep + 1;
+            document.getElementById('ta-quiz-question').innerText = q.text;
+            
+            const optsContainer = document.getElementById('ta-quiz-options-container');
+            optsContainer.innerHTML = '';
+            
+            q.options.forEach(opt => {
+                const div = document.createElement('div');
+                div.className = `ta-quiz-opt ${quizAnswers[q.id] === opt ? 'selected' : ''}`;
+                div.innerText = opt;
+                div.onclick = () => {
+                    quizAnswers[q.id] = opt;
+                    renderQuizStep(); 
+                };
+                optsContainer.appendChild(div);
+            });
+
+            document.getElementById('ta-quiz-prev').style.visibility = currentQuizStep > 0 ? 'visible' : 'hidden';
+            
+            const nextBtn = document.getElementById('ta-quiz-next');
+            nextBtn.onclick = () => {
+                if (!quizAnswers[q.id]) {
+                    showAlert('Внимание', 'Пожалуйста, выберите один из вариантов ответа, чтобы продолжить.');
+                    return;
+                }
+                if (currentQuizStep < quizQuestions.length - 1) {
+                    currentQuizStep++;
+                    renderQuizStep();
+                } else {
+                    finishQuiz();
+                }
+            };
+            document.getElementById('ta-quiz-prev').onclick = () => {
+                currentQuizStep--;
+                renderQuizStep();
+            };
+        }
+
+        function finishQuiz() {
+            document.getElementById('ta-mass-scenario').classList.remove('active');
+            document.getElementById('ta-mass-results').classList.add('active');
+            
+            const whyText = `Вы выбрали акцент на "${quizAnswers['q1']}", длительность ${quizAnswers['q3']} с проживанием типа "${quizAnswers['q4']}". Мы подобрали пакеты, которые идеально вписываются в бюджет ${quizAnswers['q2']}.`;
+            document.getElementById('ta-why-fits').innerText = whyText;
+            
+            document.getElementById('ta-lead-data').value = JSON.stringify(quizAnswers);
+
+            const container = document.getElementById('ta-packages-container');
+            container.innerHTML = '';
+            
+            db.packages.slice(0, 3).forEach(pkg => {
+                const lis = pkg.includes.map(i => `<li>${i}</li>`).join('');
+                const html = `
+                    <div class="ta-package-card">
+                        <img src="${pkg.img}" alt="${pkg.name}" class="ta-package-img">
+                        <div class="ta-package-content">
+                            <h3 class="ta-h3" style="font-size: 1.3rem; margin: 0; color: #0f172a;">${pkg.name}</h3>
+                            <div class="ta-package-price">от ${pkg.price} ₽</div>
+                            <ul class="ta-checklist">${lis}</ul>
+                            <div style="margin-top: auto; display: flex; gap: 10px;">
+                                <button class="ta-btn ta-btn-primary" style="flex: 1; padding: 12px;" onclick="window.tourApp.scrollToForm('Выбран пакет: ${pkg.name}')">Забронировать</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
+        // --- КАРТА И КОНСТРУКТОР ---
+        function initMap() {
+            if (map) {
+                setTimeout(() => map.invalidateSize(), 100);
+                return; 
+            }
+            
+            if (typeof L === 'undefined') {
+                console.error("Leaflet.js не загружен!");
+                document.getElementById('ta-map').innerHTML = "<p style='padding:20px; color:#ef4444;'>Ошибка загрузки карты. Пожалуйста, перезагрузите страницу.</p>";
+                return;
+            }
+
+            map = L.map('ta-map').setView([55.75, 75.0], 3); 
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(map);
+
+            db.regions.forEach(reg => {
+                const marker = L.marker(reg.coords).addTo(map);
+                marker.bindPopup(`
+                    <div style="text-align:center;">
+                        <b style="font-size:1.1rem; color:#0f172a;">${reg.name}</b><br>
+                        <img src="${reg.photo}" style="width:100%; height:80px; object-fit:cover; border-radius:8px; margin:8px 0;" alt="${reg.name}">
+                        <button onclick="window.tourApp.addToConstructor('${reg.id}')" class="ta-btn ta-btn-primary" style="padding:6px 12px; font-size:0.9rem; width:100%;">Добавить в маршрут</button>
+                    </div>
+                `);
+            });
+            
+            setTimeout(() => { map.invalidateSize(); }, 300);
+        }
+
+        function addToConstructor(regionId) {
+            const reg = db.regions.find(r => r.id === regionId);
+            if (!reg) return;
+            
+            if (constructorRoute.find(r => r.id === regionId)) {
+                showAlert('Уже в маршруте', `Регион «${reg.name}» уже добавлен в ваш план путешествия.`);
+                return;
+            }
+
+            constructorRoute.push({ ...reg, accType: 'hotel', days: 3 });
+            renderConstructorSidebar();
+            map.closePopup();
+        }
+
+        function removeFromConstructor(regionId) {
+            constructorRoute = constructorRoute.filter(r => r.id !== regionId);
+            renderConstructorSidebar();
+        }
+
+        function updateRouteItem(regionId, field, value) {
+            const item = constructorRoute.find(r => r.id === regionId);
+            if (item) {
+                item[field] = value;
+                updateConstructorTotal();
+            }
+        }
+
+        function renderConstructorSidebar() {
+            const container = document.getElementById('ta-selected-route');
+            if (constructorRoute.length === 0) {
+                container.innerHTML = '<p class="ta-p" style="font-size: 0.95rem; color: #64748b; text-align: center; padding: 20px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">Пока ничего не выбрано. Выберите точки на интерактивной карте слева.</p>';
+                updateConstructorTotal();
+                return;
+            }
+
+            let html = '';
+            constructorRoute.forEach(item => {
+                html += `
+                    <div class="ta-route-item">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <strong style="font-size: 1.1rem; color: #0f172a;">📍 ${item.name}</strong>
+                            <span style="color: #ef4444; cursor: pointer; font-size: 1.5rem; line-height: 1;" onclick="window.tourApp.removeFromConstructor('${item.id}')">&times;</span>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 4px;">
+                            <select class="ta-form-control" style="padding: 8px; font-size: 0.9rem;" onchange="window.tourApp.updateRouteItem('${item.id}', 'accType', this.value)">
+                                <option value="hotel" ${item.accType==='hotel'?'selected':''}>Отель (Стандарт)</option>
+                                <option value="glamping" ${item.accType==='glamping'?'selected':''}>Глэмпинг (+30%)</option>
+                                <option value="premium" ${item.accType==='premium'?'selected':''}>Премиум отель (+80%)</option>
+                            </select>
+                            <input type="number" class="ta-form-control" style="padding: 8px; font-size: 0.9rem; width: 85px; text-align:center;" min="1" max="14" value="${item.days}" onchange="window.tourApp.updateRouteItem('${item.id}', 'days', parseInt(this.value))" title="Количество дней">
+                        </div>
+                        <div style="font-size: 0.8rem; color: #64748b; text-align: right;">(дней)</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            updateConstructorTotal();
+            
+            document.getElementById('ta-lead-data').value = JSON.stringify({ route: constructorRoute });
+        }
+
+        function updateConstructorTotal() {
+            let total = 0;
+            constructorRoute.forEach(item => {
+                let dailyPrice = item.basePrice / 3; 
+                if (item.accType === 'glamping') dailyPrice *= 1.3;
+                if (item.accType === 'premium') dailyPrice *= 1.8;
+                total += dailyPrice * item.days;
+            });
+            
+            if(document.getElementById('ta-opt-guide')?.checked) total += 15000;
+            if(document.getElementById('ta-opt-gastro')?.checked) total += 10000;
+            if(document.getElementById('ta-opt-transfer')?.checked) total += 8000;
+
+            document.getElementById('ta-constructor-total').innerText = Math.round(total).toLocaleString('ru-RU');
+        }
+
+        function renderRegions(monthFilter) {
+            const grid = document.getElementById('ta-regions-grid');
+            grid.innerHTML = '';
+            
+            let filtered = db.regions;
+            if (monthFilter !== 'all') {
+                filtered = db.regions.filter(r => r.season.includes(monthFilter));
+            }
+            
+            if(filtered.length === 0) {
+                grid.innerHTML = '<p class="ta-p" style="grid-column: 1/-1; text-align:center; font-size: 1.1rem; padding: 40px; background: #f8fafc; border-radius: 12px;">К сожалению, идеально подходящих регионов на этот сезон не найдено. Выберите другой месяц.</p>';
+                return;
+            }
+
+            filtered.forEach(reg => {
+                const isPeak = monthFilter !== 'all' && (monthFilter === 'июль' || monthFilter === 'август') ? '<span class="ta-tag warning">Пик сезона</span>' : '';
+                const tags = reg.activities.map(a => `<span class="ta-tag">${a}</span>`).join('');
+                
+                grid.innerHTML += `
+                    <div class="ta-region-card">
+                        <img src="${reg.photo}" alt="${reg.name}" class="ta-region-img">
+                        <div class="ta-region-info">
+                            <h3 class="ta-h3" style="font-size: 1.4rem; margin:0; color: #0f172a;">${reg.name}</h3>
+                            ${isPeak ? `<div style="margin-top:8px">${isPeak}</div>` : ''}
+                            <div class="ta-tags">${tags}</div>
+                            <p class="ta-p" style="font-size: 0.95rem; color: #475569;">${reg.description}</p>
+                            <p class="ta-p" style="font-size: 0.85rem; color: #94a3b8; font-weight: 600;">Сезон: ${reg.season.join(', ')}</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function scrollToForm(context = '') {
+            if(context) {
+                const currentData = document.getElementById('ta-lead-data').value;
+                document.getElementById('ta-lead-data').value = currentData + ` | Контекст: ${context}`;
+            }
+            document.getElementById('ta-contact-form-section').scrollIntoView({behavior: 'smooth', block: 'center'});
+        }
+
+        function submitForm(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            btn.innerText = 'Отправка данных...';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                showAlert('Успешно!', 'Ваша заявка успешно отправлена! Эксперт свяжется с вами в ближайшее время для подтверждения.');
+                btn.innerText = 'Отправлено ✓';
+                btn.classList.replace('ta-btn-primary', 'ta-btn-secondary');
+                e.target.reset();
+            }, 1500);
+        }
+
+        return {
+            init,
+            startScenario,
+            addToConstructor,
+            removeFromConstructor,
+            updateRouteItem,
+            updateConstructorTotal,
+            filterRegions: renderRegions,
+            scrollToForm,
+            submitForm,
+            showAlert,
+            closeAlert
+        };
+        
+    })();
+
+    // Запуск виджета при загрузке
+    window.tourApp.init();
+</script>
