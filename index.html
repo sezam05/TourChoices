@@ -1,14 +1,23 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Индивидуальные и готовые путешествия по России: Карелия, Дагестан, Алтай и Байкал.">
+<title>Маршруты по России</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 <style>
     /* Изолированный контейнер для предотвращения конфликтов со стилями Tilda */
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: #f8fafc; }
     .ta-wrapper {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
         color: #1a1a1a;
         line-height: 1.6;
         box-sizing: border-box;
-        max-width: 1200px;
+        max-width: 1240px;
         margin: 0 auto;
         padding: 20px;
     }
@@ -16,7 +25,7 @@
     .ta-wrapper * { box-sizing: inherit; }
 
     /* Базовые элементы */
-    .ta-h2 { font-size: 2.2rem; font-weight: 700; margin-bottom: 1rem; text-align: center; }
+    .ta-h2 { font-size: clamp(2rem, 4vw, 2.75rem); font-weight: 750; letter-spacing: -0.035em; margin-bottom: 1rem; text-align: center; }
     .ta-h3 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
     .ta-p { margin-bottom: 1rem; color: #4a4a4a; }
     
@@ -40,7 +49,7 @@
         position: relative;
         text-align: center; padding: 100px 20px; 
         background-color: #1e293b;
-        background-image: url('images/hero-bg.jpg');
+        background-image: url('images/hero-altai-v2.png');
         background-size: cover;
         background-position: center;
         border-radius: 20px; margin-bottom: 40px;
@@ -69,7 +78,7 @@
     }
     .ta-scenario-card:hover .ta-scenario-img { transform: scale(1.05); }
     .ta-scenario-card:hover { border-color: #0066FF; box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
-    .ta-scenario-content { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+    .ta-scenario-content { padding: 22px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
     
     /* Квиз */
     .ta-section { display: none; margin-bottom: 60px; animation: fadeIn 0.5s ease-in-out; }
@@ -110,10 +119,12 @@
     .ta-form-control:focus { outline: none; border-color: #0066FF; background: #fff; box-shadow: 0 0 0 3px rgba(0,102,255,0.15); }
     
     /* Регионы */
-    .ta-region-card { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: all 0.3s; border: 1px solid #e2e8f0;}
+    .ta-region-card { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: all 0.3s; border: 1px solid #e2e8f0; display: flex; flex-direction: column; }
     .ta-region-card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
     .ta-region-img { width: 100%; height: 220px; object-fit: cover; }
-    .ta-region-info { padding: 24px; }
+    .ta-region-info { padding: 24px; display: flex; flex-direction: column; flex-grow: 1; }
+    .ta-card-meta { display: flex; gap: 12px; flex-wrap: wrap; color: #475569; font-size: .9rem; font-weight: 600; margin: 14px 0 4px; }
+    .ta-region-cta { width: 100%; margin-top: auto; }
     .ta-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
     .ta-tag { background: #e6f0fa; color: #0066FF; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
     .ta-tag.warning { background: #fff7ed; color: #ea580c; }
@@ -155,12 +166,17 @@
         .ta-split-img { height: 250px; min-height: 250px; }
     }
     @media (max-width: 768px) {
+        .ta-wrapper { padding: 14px; overflow: hidden; }
         .ta-hero h1 { font-size: 2.2rem; }
         .ta-constructor-layout { grid-template-columns: 1fr; }
         #ta-map { height: 350px; }
         .ta-hero { padding: 60px 20px; }
+        .ta-split-block { min-width: 0; gap: 0; }
+        .ta-split-content { min-width: 0; padding: 28px 20px; }
     }
 </style>
+</head>
+<body>
 
 <div class="ta-wrapper" id="tour-widget">
     
@@ -181,8 +197,8 @@
                 Экскурсии, море и кемпинги в одном путешествии. Мы создадим тур, который идеально подойдёт под ваш бюджет и стиль отдыха.
             </p>
             <div class="ta-grid-2" style="max-width: 700px; margin: 0 auto;">
-                <button class="ta-btn ta-btn-primary" style="font-size: 1.1rem; padding: 15px;" onclick="window.tourApp.startScenario('mass')">Быстрый подбор</button>
-                <button class="ta-btn ta-btn-secondary" style="font-size: 1.1rem; padding: 15px;" onclick="window.tourApp.startScenario('premium')">Собрать маршрут</button>
+                <button class="ta-btn ta-btn-primary" style="font-size: 1.1rem; padding: 15px;" onclick="window.tourApp.startScenario('mass')">Подобрать тур за 2 минуты</button>
+                <button class="ta-btn ta-btn-secondary" style="font-size: 1.1rem; padding: 15px;" onclick="window.tourApp.startScenario('premium')">Собрать свой маршрут</button>
             </div>
         </div>
     </div>
@@ -191,32 +207,32 @@
     <div id="ta-scenarios-preview" class="ta-section active">
         <h2 class="ta-h2">Что вам ближе?</h2>
         <div class="ta-grid-3">
-            <div class="ta-scenario-card" onclick="window.tourApp.startScenario('mass', 'excursion_sea')">
-                <img src="images/scenario-sea.jpg" alt="Экскурсии и море" class="ta-scenario-img">
+            <div class="ta-scenario-card" onclick="window.tourApp.startScenario('mass', 'excursion')" onkeydown="if(event.key==='Enter'||event.key===' ')this.click()" role="button" tabindex="0">
+                <img src="images/region-karelia-v2.png" alt="Мраморные скалы Рускеалы в Карелии" class="ta-scenario-img">
                 <div class="ta-scenario-content">
                     <div>
-                        <h3 class="ta-h3">🏛️ + 🌊 Экскурсии + море</h3>
-                        <p class="ta-p">Познакомьтесь с историей и отдохните у воды — насыщенно, но без долгих переездов.</p>
+                        <h3 class="ta-h3">🏛️ Экскурсии и история</h3>
+                        <p class="ta-p">Маршрут с культурными местами, природой и комфортным темпом без сложной логистики.</p>
                     </div>
                     <div class="ta-btn ta-btn-secondary" style="width: 100%; margin-top: 15px;">Подобрать</div>
                 </div>
             </div>
-            <div class="ta-scenario-card" onclick="window.tourApp.startScenario('mass', 'sea_camping')">
-                <img src="images/scenario-camping.jpg" alt="Море и кемпинг" class="ta-scenario-img">
+            <div class="ta-scenario-card" onclick="window.tourApp.startScenario('mass', 'nature')" onkeydown="if(event.key==='Enter'||event.key===' ')this.click()" role="button" tabindex="0">
+                <img src="images/region-altai.jpg" alt="Природа Алтая" class="ta-scenario-img">
                 <div class="ta-scenario-content">
                     <div>
-                        <h3 class="ta-h3">🌊 + 🏕️ Море + кемпинг</h3>
-                        <p class="ta-p">Тишина, звёзды и шум прибоя — идеальный выбор для тех, кто хочет быть ближе к природе.</p>
+                        <h3 class="ta-h3">🏕️ Природа и глэмпинги</h3>
+                        <p class="ta-p">Горы, вода и ночёвки в природных локациях с продуманным уровнем комфорта.</p>
                     </div>
                     <div class="ta-btn ta-btn-secondary" style="width: 100%; margin-top: 15px;">Подобрать</div>
                 </div>
             </div>
-            <div class="ta-scenario-card" onclick="window.tourApp.startScenario('mass', 'excursion_only')">
-                <img src="images/scenario-excursion.jpg" alt="Только экскурсии" class="ta-scenario-img">
+            <div class="ta-scenario-card" onclick="window.tourApp.startScenario('mass', 'gastro')" onkeydown="if(event.key==='Enter'||event.key===' ')this.click()" role="button" tabindex="0">
+                <img src="images/region-caucasus.jpg" alt="Горный Дагестан" class="ta-scenario-img">
                 <div class="ta-scenario-content">
                     <div>
-                        <h3 class="ta-h3">🏛️ Только экскурсии</h3>
-                        <p class="ta-p">Глубокое погружение в культуру, архитектуру и местные традиции без отвлечения на пляж.</p>
+                        <h3 class="ta-h3">🍽️ Гастрономия регионов</h3>
+                        <p class="ta-p">Местная кухня, рынки, фермы и знакомство с культурой через вкусы региона.</p>
                     </div>
                     <div class="ta-btn ta-btn-secondary" style="width: 100%; margin-top: 15px;">Подобрать</div>
                 </div>
@@ -262,7 +278,7 @@
     <!-- Премиальный сценарий: Конструктор -->
     <div id="ta-premium-scenario" class="ta-section">
         <h2 class="ta-h2">Конструктор индивидуального маршрута</h2>
-        <p class="ta-p" style="text-align: center; margin-bottom: 30px; font-size: 1.1rem;">Кликайте по маркерам на карте, чтобы добавить регионы в ваше авторское путешествие.</p>
+        <p class="ta-p" style="text-align: center; margin-bottom: 30px; font-size: 1.1rem;">Выбирайте регионы на карте. Финальную логистику и точную цену подтвердит эксперт.</p>
         
         <div class="ta-constructor-layout">
             <div class="ta-map-container">
@@ -289,9 +305,9 @@
                 </div>
                 
                 <div style="margin-top: auto;">
-                    <div class="ta-total-price">Итого: <span id="ta-constructor-total">0</span> ₽</div>
+                    <div class="ta-total-price"><span id="ta-constructor-total-prefix">Оценка от:</span> <span id="ta-constructor-total">0</span><span id="ta-constructor-total-suffix"> ₽</span></div>
                     <button class="ta-btn ta-btn-primary" style="width: 100%; padding: 15px; font-size: 1.1rem;" onclick="window.tourApp.scrollToForm('premium')">Оформить заявку</button>
-                    <button class="ta-btn ta-btn-secondary" style="width: 100%; margin-top: 10px;" onclick="window.tourApp.showAlert('Генерация PDF', 'Черновик маршрута успешно сформирован и готовится к скачиванию.')">Скачать черновик (PDF)</button>
+                    <button class="ta-btn ta-btn-secondary" style="width: 100%; margin-top: 10px;" onclick="window.tourApp.scrollToForm('Получить маршрут у эксперта')">Получить маршрут у эксперта</button>
                 </div>
             </div>
         </div>
@@ -328,7 +344,7 @@
                         Отмена или задержка рейса <span style="color: #0066FF; font-size: 1.5rem; line-height: 1;">+</span>
                     </div>
                     <div class="ta-accordion-body">
-                        Мы мгновенно предложим альтернативный рейс или оформим возврат денег по правилам авиакомпании. Наш менеджер на связи с вами 24/7 до решения проблемы.
+                        Поможем с поиском альтернативного рейса и разберём доступные варианты возврата по правилам авиакомпании. Менеджер сопровождает вас до решения вопроса.
                     </div>
                 </div>
                 
@@ -346,7 +362,7 @@
                         Необходим перенос дат <span style="color: #0066FF; font-size: 1.5rem; line-height: 1;">+</span>
                     </div>
                     <div class="ta-accordion-body">
-                        Бесплатно подберём новые даты и согласуем все изменения с партнёрами, гидами и отелями, стараясь минимизировать любые возможные штрафы.
+                        Подберём доступные новые даты и согласуем изменения с партнёрами, гидами и отелями. Возможные условия и штрафы подтверждаем до оформления.
                     </div>
                 </div>
 
@@ -374,29 +390,32 @@
                     
                     <div class="ta-form-group">
                         <label>Ваше имя</label>
-                        <input type="text" class="ta-form-control" required placeholder="Например, Иван Иванов">
+                        <input type="text" class="ta-form-control" name="name" autocomplete="name" required placeholder="Например, Иван Иванов">
                     </div>
                     
                     <div class="ta-form-group">
                         <label>Телефон / WhatsApp</label>
-                        <input type="tel" class="ta-form-control" required placeholder="+7 (999) 000-00-00">
+                        <input type="tel" class="ta-form-control" name="phone" autocomplete="tel" required placeholder="+7 (999) 000-00-00">
                     </div>
                     
                     <div class="ta-form-group">
                         <label>Желаемые даты поездки (примерно)</label>
-                        <input type="text" class="ta-form-control" placeholder="Июль - Август">
+                        <input type="text" class="ta-form-control" name="dates" placeholder="Июль - Август">
                     </div>
                     
                     <div class="ta-form-group" style="margin: 25px 0;">
                         <label style="display: flex; gap: 12px; cursor: pointer; align-items: center; font-weight: normal; color: #475569;">
-                            <input type="checkbox" checked style="width: 20px; height: 20px;"> Хочу подробную консультацию менеджера
+                            <input type="checkbox" name="consultation" checked style="width: 20px; height: 20px;"> Хочу подробную консультацию менеджера
                         </label>
                     </div>
+                    <label style="display: flex; gap: 10px; cursor: pointer; align-items: flex-start; font-size: .82rem; color: #64748b; line-height: 1.4; margin-bottom: 20px;">
+                        <input type="checkbox" required style="margin-top: 3px;"> Согласен на обработку персональных данных для ответа на заявку
+                    </label>
                     
                     <button type="submit" class="ta-btn ta-btn-primary" style="width: 100%; font-size: 1.1rem; padding: 16px;">Отправить заявку &rarr;</button>
                 </form>
             </div>
-            <img src="images/form.jpg" alt="Планирование тура" class="ta-split-img">
+            <img src="images/form.jpg" alt="Планирование путешествия по России" class="ta-split-img">
         </div>
     </div>
 </div>
@@ -414,7 +433,10 @@
                     description: "Кижи, Рускеала, Ладога — природа и история в одном завораживающем маршруте.",
                     season: ["июнь", "июль", "август", "сентябрь"],
                     activities: ["экскурсии", "кемпинг", "треккинг", "вода"],
-                    photo: "images/region-karelia.jpg",
+                    photo: "images/region-karelia-v2.png",
+                    duration: "4-6 дней",
+                    start: "Петрозаводск",
+                    activity: "лёгкий",
                     coords: [62.0, 34.0],
                     basePrice: 25000
                 },
@@ -425,6 +447,9 @@
                     season: ["май", "июнь", "июль", "август", "сентябрь"],
                     activities: ["экскурсии", "кемпинг", "горы", "гастрономия"],
                     photo: "images/region-caucasus.jpg",
+                    duration: "6-8 дней",
+                    start: "Махачкала",
+                    activity: "средний",
                     coords: [43.0, 47.0],
                     basePrice: 32000
                 },
@@ -435,6 +460,9 @@
                     season: ["июнь", "июль", "август"],
                     activities: ["треккинг", "глэмпинг", "природа"],
                     photo: "images/region-altai.jpg",
+                    duration: "7-10 дней",
+                    start: "Горно-Алтайск",
+                    activity: "средний",
                     coords: [50.9, 86.1],
                     basePrice: 45000
                 },
@@ -445,14 +473,104 @@
                     season: ["июль", "август"],
                     activities: ["экскурсии", "вода", "гастрономия"],
                     photo: "images/region-baikal.jpg",
+                    duration: "6-9 дней",
+                    start: "Иркутск",
+                    activity: "средний",
                     coords: [53.5, 108.0],
                     basePrice: 55000
+                },
+                {
+                    id: "saint-petersburg",
+                    name: "Санкт-Петербург",
+                    description: "Эрмитаж, дворцы, каналы и белые ночи - насыщенный культурный маршрут в комфортном темпе.",
+                    season: ["май", "июнь", "июль", "август", "сентябрь"],
+                    activities: ["экскурсии", "музеи", "архитектура", "вода"],
+                    photo: "images/region-spb-v2.png",
+                    duration: "3-5 дней",
+                    start: "Санкт-Петербург",
+                    activity: "лёгкий"
+                },
+                {
+                    id: "kazan",
+                    name: "Казань",
+                    description: "Кремль, татарская кухня и прогулки по старому городу - культура на стыке Востока и Запада.",
+                    season: ["май", "июнь", "июль", "август", "сентябрь"],
+                    activities: ["экскурсии", "гастрономия", "архитектура"],
+                    photo: "images/region-kazan-v2.png",
+                    duration: "3-4 дня",
+                    start: "Казань",
+                    activity: "лёгкий"
+                },
+                {
+                    id: "golden-ring",
+                    name: "Золотое кольцо",
+                    description: "Суздаль, Владимир и Ярославль - древнерусская архитектура, ремёсла и малые города.",
+                    season: ["май", "июнь", "июль", "август", "сентябрь"],
+                    activities: ["экскурсии", "история", "гастрономия"],
+                    photo: "images/region-golden-ring-v2.png",
+                    duration: "3-5 дней",
+                    start: "Москва",
+                    activity: "лёгкий"
+                },
+                {
+                    id: "kaliningrad",
+                    name: "Калининградская область",
+                    description: "Балтийское побережье, Куршская коса, старый Кёнигсберг и европейская архитектура.",
+                    season: ["май", "июнь", "июль", "август", "сентябрь"],
+                    activities: ["экскурсии", "вода", "архитектура", "гастрономия"],
+                    photo: "images/region-kaliningrad-v2.png",
+                    duration: "4-5 дней",
+                    start: "Калининград",
+                    activity: "лёгкий"
+                },
+                {
+                    id: "pskov",
+                    name: "Псков",
+                    description: "Кремль, Троицкий собор и древние крепости - насыщенное погружение в историю Северо-Запада.",
+                    season: ["май", "июнь", "июль", "август", "сентябрь"],
+                    activities: ["экскурсии", "история", "архитектура"],
+                    photo: "images/region-pskov-v2.png",
+                    duration: "2-4 дня",
+                    start: "Псков",
+                    activity: "лёгкий",
+                    coords: [57.819, 28.331],
+                    basePrice: null
+                },
+                {
+                    id: "veliky-novgorod",
+                    name: "Великий Новгород",
+                    description: "Новгородский кремль, Софийский собор и берега Волхова - маршрут к истокам русской истории.",
+                    season: ["май", "июнь", "июль", "август", "сентябрь"],
+                    activities: ["экскурсии", "история", "музеи"],
+                    photo: "images/region-novgorod-v2.png",
+                    duration: "2-3 дня",
+                    start: "Великий Новгород",
+                    activity: "лёгкий",
+                    coords: [58.522, 31.275],
+                    basePrice: null
+                },
+                {
+                    id: "nizhny-novgorod",
+                    name: "Нижний Новгород",
+                    description: "Кремль, Стрелка и волжские панорамы - город для культурного маршрута с речным акцентом.",
+                    season: ["май", "июнь", "июль", "август", "сентябрь"],
+                    activities: ["экскурсии", "архитектура", "вода", "гастрономия"],
+                    photo: "images/region-nizhny-novgorod-v2.png",
+                    duration: "3-4 дня",
+                    start: "Нижний Новгород",
+                    activity: "лёгкий",
+                    coords: [56.3287, 44.002],
+                    basePrice: null
                 }
             ],
             packages: [
-                { id: 1, name: "Карельский экспресс", price: "45 000", match: ["Экскурсии и история", "до 80 тыс. ₽", "3–5 дней", "Комфортный отель"], includes: ["Проживание 3 ночи (4 звезды)", "Экскурсия в каньон Рускеала", "Билеты на метеор до Кижи", "Трансфер от Петрозаводска"], img: "images/pack-karelia.jpg" },
-                { id: 2, name: "Дагестан: Горы и Море", price: "68 000", match: ["Природа и глэмпинги", "80–150 тыс. ₽", "7–10 дней", "Аутентичный глэмпинг"], includes: ["Глэмпинг в горах 4 ночи", "Джип-тур к Сулакскому каньону", "Национальная кухня (завтраки+ужины)", "Прогулка на катере"], img: "images/pack-caucasus.jpg" },
-                { id: 3, name: "Алтайская перезагрузка", price: "120 000", match: ["Природа и глэмпинги", "от 150 тыс. ₽", "7–10 дней", "Аутентичный глэмпинг"], includes: ["Проживание премиум 7 ночей", "Вертолетная экскурсия к Белухе", "Личный гид-сопровождающий", "SPA-комплекс и баня"], img: "images/pack-altai.jpg" }
+                { id: 1, name: "Карельский экспресс", price: "45 000", match: ["Экскурсии и история", "до 80 тыс. ₽", "3–5 дней", "Комфортный отель"], includes: ["Проживание 3 ночи (4 звезды)", "Экскурсия в каньон Рускеала", "Билеты на метеор до Кижи", "Трансфер от Петрозаводска"], img: "images/pack-karelia-v2.png" },
+                { id: 2, name: "Дагестан: Горы и Море", price: "68 000", match: ["Природа и глэмпинги", "80–150 тыс. ₽", "7–10 дней", "Аутентичный глэмпинг"], includes: ["Глэмпинг в горах 4 ночи", "Джип-тур к Сулакскому каньону", "Национальная кухня (завтраки+ужины)", "Прогулка на катере"], img: "images/pack-caucasus-v2.png" },
+                { id: 3, name: "Алтайская перезагрузка", price: "120 000", match: ["Природа и глэмпинги", "от 150 тыс. ₽", "7–10 дней", "Аутентичный глэмпинг"], includes: ["Проживание премиум 7 ночей", "Вертолетная экскурсия к Белухе", "Личный гид-сопровождающий", "SPA-комплекс и баня"], img: "images/pack-altai-v2.png" },
+                { id: 4, name: "Петербург: дворцы и каналы", price: null, match: ["Экскурсии и история", "3–5 дней", "Комфортный отель"], includes: ["Эрмитаж и исторический центр", "Прогулка по рекам и каналам", "Выезд в Петергоф", "Размещение в центре города"], img: "images/region-spb-v2.png" },
+                { id: 5, name: "Казань: культуры и вкусы", price: null, match: ["Экскурсии и история", "Гастрономия", "3–5 дней", "Комфортный отель"], includes: ["Казанский кремль и Старо-Татарская слобода", "Дегустация татарской кухни", "Экскурсия с локальным гидом", "Размещение в центре Казани"], img: "images/region-kazan-v2.png" },
+                { id: 6, name: "Золотое кольцо: русская старина", price: null, match: ["Экскурсии и история", "3–5 дней", "Комфортный отель"], includes: ["Суздаль, Владимир и Ярославль", "Музеи и ремесленные мастерские", "Комфортный трансфер по маршруту", "Авторский маршрутный лист"], img: "images/region-golden-ring-v2.png" },
+                { id: 7, name: "Калининград: Балтика и история", price: null, match: ["Экскурсии и история", "3–5 дней", "Комфортный отель"], includes: ["Куршская коса и побережье", "Прогулка по историческому центру", "Янтарный маршрут", "Размещение в Калининграде"], img: "images/region-kaliningrad-v2.png" }
             ]
         };
 
@@ -496,7 +614,13 @@
             
             if (type === 'mass') {
                 document.getElementById('ta-mass-scenario').classList.add('active');
-                if(preSelect) quizAnswers['preSelect'] = preSelect;
+                quizAnswers = {};
+                const scenarioDefaults = {
+                    excursion: { q1: 'Экскурсии и история' },
+                    nature: { q1: 'Природа и глэмпинги', q4: 'Аутентичный глэмпинг' },
+                    gastro: { q1: 'Гастрономия' }
+                };
+                if (preSelect && scenarioDefaults[preSelect]) quizAnswers = { ...scenarioDefaults[preSelect] };
                 currentQuizStep = 0;
                 renderQuizStep();
                 document.getElementById('ta-mass-scenario').scrollIntoView({behavior: 'smooth', block: 'start'});
@@ -552,7 +676,7 @@
             document.getElementById('ta-mass-scenario').classList.remove('active');
             document.getElementById('ta-mass-results').classList.add('active');
             
-            const whyText = `Вы выбрали акцент на "${quizAnswers['q1']}", длительность ${quizAnswers['q3']} с проживанием типа "${quizAnswers['q4']}". Мы подобрали пакеты, которые идеально вписываются в бюджет ${quizAnswers['q2']}.`;
+            const whyText = `Вы выбрали акцент на "${quizAnswers['q1']}", длительность ${quizAnswers['q3']} с проживанием типа "${quizAnswers['q4']}". Ниже - маршруты, наиболее близкие к вашим предпочтениям. Финальную стоимость подтвердим после согласования дат и состава группы.`;
             document.getElementById('ta-why-fits').innerText = whyText;
             
             document.getElementById('ta-lead-data').value = JSON.stringify(quizAnswers);
@@ -560,14 +684,20 @@
             const container = document.getElementById('ta-packages-container');
             container.innerHTML = '';
             
-            db.packages.slice(0, 3).forEach(pkg => {
+            const scoredPackages = db.packages
+                .map(pkg => ({ ...pkg, score: pkg.match.filter(value => Object.values(quizAnswers).includes(value)).length }))
+                .sort((a, b) => b.score - a.score);
+            const packagesToShow = scoredPackages.filter(pkg => pkg.score > 0).slice(0, 4);
+            const shownPackages = packagesToShow.length ? packagesToShow : scoredPackages.slice(0, 4);
+
+            shownPackages.forEach(pkg => {
                 const lis = pkg.includes.map(i => `<li>${i}</li>`).join('');
                 const html = `
                     <div class="ta-package-card">
                         <img src="${pkg.img}" alt="${pkg.name}" class="ta-package-img">
                         <div class="ta-package-content">
                             <h3 class="ta-h3" style="font-size: 1.3rem; margin: 0; color: #0f172a;">${pkg.name}</h3>
-                            <div class="ta-package-price">от ${pkg.price} ₽</div>
+                            <div class="ta-package-price">${pkg.price ? `от ${pkg.price} ₽ <span style="font-size:.8rem;font-weight:500;color:#64748b;">за человека</span>` : 'Индивидуальный расчёт'}</div>
                             <ul class="ta-checklist">${lis}</ul>
                             <div style="margin-top: auto; display: flex; gap: 10px;">
                                 <button class="ta-btn ta-btn-primary" style="flex: 1; padding: 12px;" onclick="window.tourApp.scrollToForm('Выбран пакет: ${pkg.name}')">Забронировать</button>
@@ -597,7 +727,7 @@
                 attribution: '&copy; OpenStreetMap'
             }).addTo(map);
 
-            db.regions.forEach(reg => {
+            db.regions.filter(reg => reg.coords).forEach(reg => {
                 const marker = L.marker(reg.coords).addTo(map);
                 marker.bindPopup(`
                     <div style="text-align:center;">
@@ -674,18 +804,27 @@
 
         function updateConstructorTotal() {
             let total = 0;
+            let needsIndividualQuote = false;
             constructorRoute.forEach(item => {
+                if (!Number.isFinite(item.basePrice)) {
+                    needsIndividualQuote = true;
+                    return;
+                }
                 let dailyPrice = item.basePrice / 3; 
                 if (item.accType === 'glamping') dailyPrice *= 1.3;
                 if (item.accType === 'premium') dailyPrice *= 1.8;
                 total += dailyPrice * item.days;
             });
             
-            if(document.getElementById('ta-opt-guide')?.checked) total += 15000;
-            if(document.getElementById('ta-opt-gastro')?.checked) total += 10000;
-            if(document.getElementById('ta-opt-transfer')?.checked) total += 8000;
+            if (!needsIndividualQuote) {
+                if(document.getElementById('ta-opt-guide')?.checked) total += 15000;
+                if(document.getElementById('ta-opt-gastro')?.checked) total += 10000;
+                if(document.getElementById('ta-opt-transfer')?.checked) total += 8000;
+            }
 
-            document.getElementById('ta-constructor-total').innerText = Math.round(total).toLocaleString('ru-RU');
+            document.getElementById('ta-constructor-total-prefix').innerText = needsIndividualQuote ? 'Стоимость:' : 'Оценка от:';
+            document.getElementById('ta-constructor-total').innerText = needsIndividualQuote ? 'по запросу' : Math.round(total).toLocaleString('ru-RU');
+            document.getElementById('ta-constructor-total-suffix').innerText = needsIndividualQuote ? '' : ' ₽';
         }
 
         function renderRegions(monthFilter) {
@@ -714,7 +853,9 @@
                             ${isPeak ? `<div style="margin-top:8px">${isPeak}</div>` : ''}
                             <div class="ta-tags">${tags}</div>
                             <p class="ta-p" style="font-size: 0.95rem; color: #475569;">${reg.description}</p>
+                            <div class="ta-card-meta"><span>⌛ ${reg.duration}</span><span>✈️ ${reg.start}</span><span>● ${reg.activity}</span></div>
                             <p class="ta-p" style="font-size: 0.85rem; color: #94a3b8; font-weight: 600;">Сезон: ${reg.season.join(', ')}</p>
+                            <button class="ta-btn ta-btn-secondary ta-region-cta" onclick="window.tourApp.scrollToForm('Интересует направление: ${reg.name}')">Узнать маршрут</button>
                         </div>
                     </div>
                 `;
@@ -731,17 +872,7 @@
 
         function submitForm(e) {
             e.preventDefault();
-            const btn = e.target.querySelector('button[type="submit"]');
-            const originalText = btn.innerText;
-            btn.innerText = 'Отправка данных...';
-            btn.disabled = true;
-            
-            setTimeout(() => {
-                showAlert('Успешно!', 'Ваша заявка успешно отправлена! Эксперт свяжется с вами в ближайшее время для подтверждения.');
-                btn.innerText = 'Отправлено ✓';
-                btn.classList.replace('ta-btn-primary', 'ta-btn-secondary');
-                e.target.reset();
-            }, 1500);
+            showAlert('Заявка готова', 'Форма заполнена. Подключите CRM или почтовый сервис, чтобы заявки автоматически поступали менеджеру.');
         }
 
         return {
@@ -763,3 +894,5 @@
     // Запуск виджета при загрузке
     window.tourApp.init();
 </script>
+</body>
+</html>
